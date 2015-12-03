@@ -3,11 +3,12 @@ SIMPLE socket programming, for network project.
 
 ---
 
-###scheme:
+###	scheme:
 -	What target?
 -	Should seperate server and client when design & programming.
 
-return value of socket method?
+###	question
+1.	return value of socket method?
 -	socket.socket()		--->	new instance of socket(socket fd in LINUX)
 -	socket.bind()		--->	?
 -	socket.listen()		--->	?
@@ -15,6 +16,10 @@ return value of socket method?
 -	socket.send(buff)	--->	?
 -	socket.recv(bufsz)	--->	?
 -	socket.close()		--->	?
+
+2.	SOCK\_STREAM or SOCK\_PACKET
+3.	backlog, what happen?
+4.	time out issue, have it or implement it?
 
 ---
 by Piji You

@@ -1,5 +1,6 @@
-
-
+#	my define
+*.wav
+*.mp3
 
 
 #	IDE ignore

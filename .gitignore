@@ -1,4 +1,11 @@
-# Byte-compiled / optimized / DLL files
+
+
+
+
+#	IDE ignore
+.idea
+
+#Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 

@@ -1,25 +1,29 @@
 import socket
+import threading
+import wave
+from time import sleep
 from share.config import CONFIG
+from server.client_handle import CLIENT_HANDLE
 
-class SERVER:
-    addr = CONFIG.server_addr
-    port = CONFIG.server_port
+
+# todo, delete issue?
+class SERVER_HANDLE:
+    config = CONFIG()
+    sk = None
 
     def __init__(self):
         self.sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_UDP)
-        self.sk.bind((self.addr, self.port))
-        self.sk.listen(2)
-        pass
-
-
-class CLIENT:
-    def __init__(self, dconn=None, daddr=None):
-        self.conn = dconn
-        self.addr = daddr
+        self.sk.bind((self.config.server_addr, self.config.server_port))
+        self.sk.listen(10)
 
 
 if __name__ == '__main__':
-    server = SERVER()
+    server_sk = SERVER_HANDLE()
+    cnt = 0
     while True:
-        client = CLIENT(server.sk.accept())
+        client_sk, _ = server_sk.sk.accept()
+        client_th = CLIENT_HANDLE(client_sk)
+        client_th.start()
+        cnt += 1
+        print('Server load: %d', cnt)
         # todo, move to other THREAD

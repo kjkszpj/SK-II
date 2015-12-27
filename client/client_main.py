@@ -20,10 +20,12 @@ class PLAYER(threading.Thread):
     data_list = None
     did = None
     player_info = None
+    lock = None
 
     def __init__(self, dsk):
         threading.Thread.__init__(self)
         self.sk = dsk
+        self.lock = threading.Lock()
         pass
 
     # send & player control logic
@@ -48,7 +50,9 @@ class PLAYER(threading.Thread):
         self.pos = pos
         self.stream = self.player.open(format=self.player.get_format_from_width(self.player_info[0]),
                                        channels=self.player_info[1], rate=self.player_info[2], output=True)
+        self.lock.acquire()
         self.stream.start_stream()
+        self.lock.release()
 
     def pause(self):
         msg = ATP()
@@ -58,9 +62,12 @@ class PLAYER(threading.Thread):
         msg.head.did = self.did
         msg.info = 'PAUSE'
         socket.socket.sendall(self.sk, msg.tobyte())
+        self.lock.acquire()
         self.stream.stop_stream()
         self.stream.is_active()
         self.stream.is_stopped()
+        self.lock.release()
+        print('-----------------')
 
     def teardown(self):
         msg = ATP()
@@ -92,14 +99,14 @@ class PLAYER(threading.Thread):
     # thread like?
     def run(self):
         while True:
-            print('ready to listen')
+            # print('ready to listen')
             content = socket.socket.recv(self.sk, CONFIG.head_size)
-            print(content)
+            # print(content)
             if len(content) != CONFIG.head_size:
                 print('maybe /0? Ignored.')
                 continue
             temp = HEAD(bytearray(content))
-            print(temp.type, temp.func)
+            # print(temp.type, temp.func)
             if temp.verify():
                 if temp.flag == 0:
                     # for now, it is no use
@@ -138,16 +145,16 @@ class PLAYER(threading.Thread):
         self.player_info = (int(content[0]), int(content[1]), int(content[2]))
 
     def shou_play(self):
-        print('receive play')
+        # print('receive play')
         data_len = read_int(self.sk)
         pos = read_int(self.sk)
-        print(data_len, pos)
+        # print(data_len, pos)
         content = read_len(self.sk, data_len)
         if pos == self.pos:
+            self.lock.acquire()
             if self.stream.is_active():
                 self.stream.write(bytes(content))
-            else:
-                print('already stop!')
+            self.lock.release()
             self.pos += 1
 
     def shou_pause(self):
@@ -217,7 +224,7 @@ if __name__ == '__main__':
     p.setup()
     sleep(1)
     p.play()
-    sleep(1)
+    sleep(10)
     p.pause()
     input('.')
     p.play(p.pos)

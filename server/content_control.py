@@ -69,8 +69,8 @@ class CONTENT_CONTROL(threading.Thread):
             self.status = 'STOP'
         # sleep(0.1)
         self.pos += 1
-        print(len(data))
-        print(self.status)
+        # print(len(data))
+        # print(self.status)
         # input('.')
 
     def pause(self, package=None):

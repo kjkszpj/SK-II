@@ -82,9 +82,9 @@ class ATP(object):
         self.head = HEAD(data[:8])
         self.info = data[8:]
 
-    def tobyte(self):
+    def tobyte(self, display=True):
         # assert type(self.info) == bytearray
-        print(self.head.tobyte() + tobyte(self.info) + tobyte('\0'))
+        if display: print((self.head.tobyte() + tobyte(self.info) + tobyte('\0'))[:32])
         return self.head.tobyte() + tobyte(self.info) + tobyte('\0')
 
     def verify(self):
@@ -104,15 +104,17 @@ def tobyte(data, len=0):
         return data
     elif type(data) == str:
         return str.encode(data, 'utf-8')
+    elif type(data) == bytes:
+        return bytearray(data)
 
 
 def readint(data):
     assert type(data) == bytearray
     result = 0
     for i in data:
-        assert i in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ']
-        if i == ' ': break
-        result = result * 10 + ord(i) - ord('0')
+        assert chr(i) in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', '\0']
+        if i == ' ' or i == '\0': break
+        result = result * 10 + i - ord('0')
     return result
 
 

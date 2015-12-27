@@ -4,3 +4,4 @@ class CONFIG:
     buffersize = 1024
     atp_size = 512
     head_size = 8
+    cnt_frames = 1024

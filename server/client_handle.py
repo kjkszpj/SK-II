@@ -44,7 +44,7 @@ class CLIENT_HANDLE(threading.Thread):
 
     def login(self, p):
         self.uid = p.head.uid
-        # todo, not done yet
+        # todo, not done yet, send data list to user
         pass
 
     def logout(self, p):

@@ -18,7 +18,15 @@ class CONTENT_CONTROL(threading.Thread):
 
     def setup(self, package):
         if not self.content is None: self.content.close()
-        self.content = wave.open('../data/%d.wav' % package.did, 'rb')
+        try: self.content = wave.open('../data/%d.wav' % package.head.did, 'rb')
+        except:
+            msg = ATP()
+            msg.type = 2
+            msg.info = 'Can not open file ../data/%d.wav' % package.head.did
+            self.sk.sendall(msg.tobyte())
+            return
+        else:
+            pass
         self.did = package.did
         self.status = 'NEW'
         # construct new package

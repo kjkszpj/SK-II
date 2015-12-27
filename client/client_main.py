@@ -5,11 +5,12 @@ sys.path.append(os.path.abspath(sys.argv[0])[:-21])
 import pyaudio
 import socket
 import random
+import threading
 from share.atp import *
 from share.config import CONFIG
 
 
-class PLAYER():
+class PLAYER(threading.Thread):
     pos = None
     player = None
     stream = None
@@ -20,6 +21,7 @@ class PLAYER():
     player_info = None
 
     def __init__(self, dsk):
+        threading.Thread.__init__(self)
         self.sk = dsk
         pass
 
@@ -107,6 +109,8 @@ class PLAYER():
                         self.shou_login()
                     elif temp.func == 1:
                         self.shou_logout()
+                elif temp.type == 2:
+                    self.shou_error()
             else:
                 print('Invalid head encounter.')
             pass
@@ -140,6 +144,10 @@ class PLAYER():
 
     def shou_logout(self):
         pass
+
+    def shou_error(self):
+        content = read_file(self.sk)
+        print(content)
 
 
 def init():
@@ -177,4 +185,14 @@ if __name__ == '__main__':
         else:
             break
     p = PLAYER(sk)
-    p.login()
+    p.run()
+    print('ready')
+    while True:
+        order = input('>>>new order\n')
+        order = int(order)
+        if order == 0: p.setup()
+        if order == 1: p.play()
+        if order == 2: p.pause()
+        if order == 3: p.teardown()
+        if order == 10: p.login()
+        if order == 11: p.logout()

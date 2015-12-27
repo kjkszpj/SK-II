@@ -23,11 +23,13 @@ class CLIENT_HANDLE(threading.Thread):
         self.content.start()
         while True:
             raw_data = self.sk.recv(CONFIG.buffersize)
-            p = ATP(raw_data)
+            if raw_data == b'':
+                break
+            print(raw_data[:22])
+            p = ATP(bytearray(raw_data))
             func = None
             if not p.verify():
                 print('---ERROR, package format wrong')
-                pass
                 break
             if p.head.type == 0:
                 if p.head.func == 0:      func = self.content.setup
@@ -38,9 +40,10 @@ class CLIENT_HANDLE(threading.Thread):
                 if p.head.func == 0:      func = self.login
                 if p.head.func == 1:      func = self.logout
             if func(p) == True: break
+        print('bye~')
 
     def login(self, p):
-        self.uid = readint(p.info)
+        self.uid = p.head.uid
         # todo, not done yet
         pass
 

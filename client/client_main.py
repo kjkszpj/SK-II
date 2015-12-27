@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.append(os.path.abspath(sys.argv[0])[:-21])
+
 import pyaudio
 import socket
 import random
@@ -5,7 +9,7 @@ from share.atp import *
 from share.config import CONFIG
 
 
-class PLAYER:
+class PLAYER():
     pos = None
     player = None
     stream = None
@@ -173,3 +177,4 @@ if __name__ == '__main__':
         else:
             break
     p = PLAYER(sk)
+    p.login()

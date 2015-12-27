@@ -57,7 +57,7 @@ class HEAD(object):
             print('header format is wrong')
             return bytearray(8)
         else:
-            return bytearray(self.version, self.type, self.func, self.flag) + tobyte(self.uid) + tobyte(self.did)
+            return bytearray((self.version, self.type, self.func, self.flag)) + tobyte(self.uid) + tobyte(self.did)
 
     def check_format(self):
         assert self.version in range(0, 0x100)
@@ -68,7 +68,7 @@ class HEAD(object):
         assert self.did in range(0, 0x10000)
 
     def verify(self):
-        return self.version & 0xF0 == 0b0110
+        return self.version & 0xF0 == 0b01100000
 
 
 class ATP(object):
@@ -83,7 +83,8 @@ class ATP(object):
         self.info = data[8:]
 
     def tobyte(self):
-        assert type(self.info) == bytearray
+        # assert type(self.info) == bytearray
+        print(self.head.tobyte() + tobyte(self.info) + tobyte('\0'))
         return self.head.tobyte() + tobyte(self.info) + tobyte('\0')
 
     def verify(self):

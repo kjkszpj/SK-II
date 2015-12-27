@@ -1,7 +1,8 @@
+import os
+import sys
+sys.path.append(os.path.abspath(sys.argv[0])[:-21])
+
 import socket
-import threading
-import wave
-from time import sleep
 from share.config import CONFIG
 from server.client_handle import CLIENT_HANDLE
 
@@ -12,7 +13,7 @@ class SERVER_HANDLE:
     sk = None
 
     def __init__(self):
-        self.sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_UDP)
+        self.sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         self.sk.bind((self.config.server_addr, self.config.server_port))
         self.sk.listen(10)
 
@@ -25,5 +26,4 @@ if __name__ == '__main__':
         client_th = CLIENT_HANDLE(client_sk)
         client_th.start()
         cnt += 1
-        print('Server load: %d', cnt)
-        # todo, move to other THREAD
+        print('Server load: %d' % cnt)

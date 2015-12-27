@@ -2,14 +2,16 @@ import socket
 import threading
 import wave
 from time import sleep
-from share.atp import ATP
+from share.atp import *
 from share.config import CONFIG
 from server.content_control import CONTENT_CONTROL
+
 
 class CLIENT_HANDLE(threading.Thread):
     sk = None
     data = None
     content = None
+    uid = None
 
     def __init__(self, dconn):
         threading.Thread.__init__(self)
@@ -17,7 +19,7 @@ class CLIENT_HANDLE(threading.Thread):
 
     def run(self):
         # todo, where to put init of content_control?
-        self.content = CONTENT_CONTROL(self.sk, None)
+        self.content = CONTENT_CONTROL(self.sk)
         self.content.start()
         while True:
             raw_data = self.sk.recv(CONFIG.buffersize)
@@ -33,5 +35,15 @@ class CLIENT_HANDLE(threading.Thread):
                 elif p.head.func == 2:    func = self.content.pause
                 elif p.head.func == 3:    func = self.content.teardown
             elif p.head.type == 1:
-                if p.head.func == 0:      pass
-            func(p)
+                if p.head.func == 0:      func = self.login
+                if p.head.func == 1:      func = self.logout
+            if func(p) == True: break
+
+    def login(self, p):
+        self.uid = readint(p.info)
+        # todo, not done yet
+        pass
+
+    def logout(self, p):
+        self.uid = None
+        return True

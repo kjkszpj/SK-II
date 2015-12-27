@@ -43,6 +43,7 @@ class HEAD(object):
 
     def __init__(self, data=bytearray(8)):
         self.version = int(data[0])
+        self.version = 0b01101111
         self.type = int(data[1])
         self.func = int(data[2])
         self.flag = int(data[3])
@@ -83,7 +84,7 @@ class ATP(object):
 
     def tobyte(self):
         assert type(self.info) == bytearray
-        return self.head.tobyte() + self.info
+        return self.head.tobyte() + tobyte(self.info) + tobyte('\0')
 
     def verify(self):
         return self.head.verify()
@@ -101,6 +102,16 @@ def tobyte(data):
         return data
     elif type(data) == str:
         return str.encode(data, 'utf-8')
+
+
+def readint(data):
+    assert type(data) == bytearray
+    result = 0
+    for i in data:
+        assert i in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ']
+        if i == ' ': break
+        result = result * 10 + ord(i) - ord('0')
+    return result
 
 
 if __name__ == '__main__':

@@ -26,7 +26,7 @@ class PLAYER(threading.Thread):
         pass
 
     # send & player control logic
-    def setup(self, did=random.randint(0, 233)):
+    def setup(self, did=1):
         # update player on ack package for setup
         msg = ATP()
         msg.head.type = 0
@@ -91,8 +91,11 @@ class PLAYER(threading.Thread):
             print('ready to listen')
             content = socket.socket.recv(self.sk, CONFIG.head_size)
             print(content)
-            print(type(content))
+            if len(content) != CONFIG.head_size:
+                print('maybe /0? Ignored.')
+                continue
             temp = HEAD(bytearray(content))
+            print(temp.type, temp.func)
             if temp.verify():
                 if temp.flag == 0:
                     # for now, it is no use
@@ -119,13 +122,15 @@ class PLAYER(threading.Thread):
 
     # receive logic
     def shou_setup(self):
+        print('receive setup')
         content = read_file(self.sk)
-        content = content.encode('utf-8')
+        content = content.decode('utf-8')
         content = content.split(' ')
         self.player = pyaudio.PyAudio()
         self.player_info = (int(content[0]), int(content[1]), int(content[2]))
 
     def shou_play(self):
+        print('receive play')
         data_len = read_int(self.sk)
         pos = read_int(self.sk)
         content = read_len(self.sk, data_len)
@@ -134,20 +139,25 @@ class PLAYER(threading.Thread):
             self.pos += data_len
 
     def shou_pause(self):
+        print('receive pause')
         pass
 
     def shou_teardown(self):
+        print('receive teardown')
         pass
 
     def shou_login(self):
+        print('receive login')
         content = read_file(self.sk)
-        content = content.encode('utf-8')
+        content = content.decode('utf-8')
         self.data_list = content.split(' ')
 
     def shou_logout(self):
+        print('receive logout')
         pass
 
     def shou_error(self):
+        print('receive error')
         content = read_file(self.sk)
         print(content)
 
@@ -161,19 +171,20 @@ def read_file(sk):
     result = socket.socket.recv(sk, 1)
     while int(result[-1]) != 0:
         result += socket.socket.recv(sk, 1)
+    result = bytearray(result)
     return result[:-1]
 
 
 def read_len(sk, len=1):
-    return socket.socket.recv(sk, len)
+    return bytearray(socket.socket.recv(sk, len))
 
 
 def read_int(sk):
     result = '0'
-    ch = socket.socket.recv(sk, 1).encode('utf-8')
+    ch = socket.socket.recv(sk, 1).decode('utf-8')
     while ch in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
         result = result * 10 + ord(ch) - ord('0')
-        ch = socket.socket.recv(sk, 1).encode('utf-8')
+        ch = socket.socket.recv(sk, 1).decode('utf-8')
     return result
 
 

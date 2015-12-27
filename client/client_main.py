@@ -21,6 +21,8 @@ class PLAYER(threading.Thread):
     did = None
     player_info = None
     lock = None
+    t = None
+    cnt = None
 
     def __init__(self, dsk):
         threading.Thread.__init__(self)
@@ -39,7 +41,12 @@ class PLAYER(threading.Thread):
         msg.info = 'SETUP'
         socket.socket.sendall(self.sk, msg.tobyte())
 
-    def play(self, pos=0):
+    def play(self, pos=None):
+        if pos is None:
+            if self.stream is None:
+                pos = 0
+            else:
+                pos = max(int(self.t * self.player_info[2] / CONFIG.cnt_frames -10), 0)
         msg = ATP()
         msg.head.type = 0
         msg.head.func = 1
@@ -50,6 +57,8 @@ class PLAYER(threading.Thread):
         self.pos = pos
         self.stream = self.player.open(format=self.player.get_format_from_width(self.player_info[0]),
                                        channels=self.player_info[1], rate=self.player_info[2], output=True)
+        self.t = pos * CONFIG.cnt_frames / self.player_info[2]
+        self.cnt = self.stream.get_time()
         self.lock.acquire()
         self.stream.start_stream()
         self.lock.release()
@@ -64,6 +73,7 @@ class PLAYER(threading.Thread):
         socket.socket.sendall(self.sk, msg.tobyte())
         self.lock.acquire()
         self.stream.stop_stream()
+        self.t += self.stream.get_time() - self.cnt
         self.stream.is_active()
         self.stream.is_stopped()
         self.lock.release()
@@ -145,10 +155,10 @@ class PLAYER(threading.Thread):
         self.player_info = (int(content[0]), int(content[1]), int(content[2]))
 
     def shou_play(self):
-        # print('receive play')
+        print('receive play')
         data_len = read_int(self.sk)
         pos = read_int(self.sk)
-        # print(data_len, pos)
+        print(data_len, pos)
         content = read_len(self.sk, data_len)
         if pos == self.pos:
             self.lock.acquire()
@@ -224,10 +234,10 @@ if __name__ == '__main__':
     p.setup()
     sleep(1)
     p.play()
-    sleep(10)
+    sleep(5)
     p.pause()
     input('.')
-    p.play(p.pos)
+    p.play()
     # while True:
     #     order = input('>>>new order\n')
     #     order = int(order)

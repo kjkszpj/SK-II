@@ -45,13 +45,13 @@ class CONTENT_CONTROL(threading.Thread):
     def play(self, package=None):
         if not package is None:
             self.pos = int(package.info.decode('utf-8')[:-1])
+            self.content.setpos(self.pos * CONFIG.cnt_frames)
         if self.content is None:
             package.head.type = 2
             package.head.flag = 1
             package.info = 'open it before play'
             self.sk.sendall(package.tobyte())
             return
-        # self.content.setpos(self.pos * CONFIG.cnt_frames)
         # print(self.content.tell())
         self.status = 'PLAY'
         data = self.content.readframes(CONFIG.cnt_frames)

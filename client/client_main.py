@@ -88,12 +88,15 @@ class PLAYER(threading.Thread):
     # thread like?
     def run(self):
         while True:
+            print('ready to listen')
             content = socket.socket.recv(self.sk, CONFIG.head_size)
-            temp = HEAD(content)
+            print(content)
+            print(type(content))
+            temp = HEAD(bytearray(content))
             if temp.verify():
                 if temp.flag == 0:
                     # for now, it is no use
-                    pass
+                    print('Ignored.')
                     continue
                 elif temp.type == 0:
                     if temp.func == 0:
@@ -113,7 +116,6 @@ class PLAYER(threading.Thread):
                     self.shou_error()
             else:
                 print('Invalid head encounter.')
-            pass
 
     # receive logic
     def shou_setup(self):
@@ -157,8 +159,8 @@ def init():
 
 def read_file(sk):
     result = socket.socket.recv(sk, 1)
-    while result[-1] != b'\0':
-        result = socket.socket.recv(sk, 1)
+    while int(result[-1]) != 0:
+        result += socket.socket.recv(sk, 1)
     return result[:-1]
 
 
@@ -185,8 +187,8 @@ if __name__ == '__main__':
         else:
             break
     p = PLAYER(sk)
-    p.run()
-    print('ready')
+    p.start()
+    print('ready to send')
     while True:
         order = input('>>>new order\n')
         order = int(order)

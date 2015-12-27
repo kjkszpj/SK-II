@@ -21,7 +21,8 @@ class CONTENT_CONTROL(threading.Thread):
         try: self.content = wave.open('../data/%d.wav' % package.head.did, 'rb')
         except:
             msg = ATP()
-            msg.type = 2
+            msg.head.type = 2
+            msg.head.flag = 1
             msg.info = 'Can not open file ../data/%d.wav' % package.head.did
             self.sk.sendall(msg.tobyte())
             return
@@ -38,6 +39,13 @@ class CONTENT_CONTROL(threading.Thread):
 
     def play(self, package):
         pos = readint(package.info)
+        if self.content == None:
+            msg = ATP()
+            msg.head.type = 2
+            msg.head.flag = 1
+            msg.info = 'open it before play'
+            self.sk.sendall(msg.tobyte())
+            return
         self.content.setpos(pos)
         self.status = 'PLAY'
         while self.status == 'PLAY':
@@ -53,8 +61,9 @@ class CONTENT_CONTROL(threading.Thread):
 
     def teardown(self, package=None):
         self.content.close()
+        self.content = None
         self.status = 'STOP'
 
     def run(self):
-        threading.Thread.run(self)
         while self.status != 'STOP': pass
+

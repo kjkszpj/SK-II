@@ -23,11 +23,13 @@ class PLAYER(threading.Thread):
     lock = None
     t = None
     cnt = None
+    debug = True
 
-    def __init__(self, dsk):
+    def __init__(self, dsk, debug):
         threading.Thread.__init__(self)
         self.sk = dsk
         self.lock = threading.Lock()
+        self.debug = debug
         pass
 
     # send & player control logic
@@ -77,7 +79,7 @@ class PLAYER(threading.Thread):
         self.stream.is_active()
         self.stream.is_stopped()
         self.lock.release()
-        print('-----------------')
+        if self.debug: print('-----------------')
 
     def teardown(self):
         msg = ATP()
@@ -87,8 +89,14 @@ class PLAYER(threading.Thread):
         msg.head.did = self.did
         msg.info = 'PAUSE'
         socket.socket.sendall(self.sk, msg.tobyte())
+        self.lock.acquire()
         self.stream.stop_stream()
+        self.t += self.stream.get_time() - self.cnt
+        self.stream.is_active()
+        self.stream.is_stopped()
+        self.lock.release()
         self.stream.close()
+        self.stream = None
 
     def login(self, uid=random.randint(0, 233)):
         msg = ATP()
@@ -101,26 +109,26 @@ class PLAYER(threading.Thread):
     def logout(self):
         msg = ATP()
         msg.head.type = 1
-        msg.head.type = 1
+        msg.head.func = 1
         msg.head.uid = self.uid
         msg.info = 'LOGOUT'
         socket.socket.sendall(self.sk, msg.tobyte())
 
     # thread like?
     def run(self):
+        if self.debug: print('ready to listen')
         while True:
-            # print('ready to listen')
             content = socket.socket.recv(self.sk, CONFIG.head_size)
-            # print(content)
+            # if self.debug: print(content)
             if len(content) != CONFIG.head_size:
-                print('maybe /0? Ignored.')
+                if self.debug: print('maybe /0? Ignored.')
                 continue
             temp = HEAD(bytearray(content))
-            # print(temp.type, temp.func)
+            # if self.debug: print(temp.type, temp.func)
             if temp.verify():
                 if temp.flag == 0:
                     # for now, it is no use
-                    print('Ignored.')
+                    if self.debug: print('Ignored.')
                     continue
                 elif temp.type == 0:
                     if temp.func == 0:
@@ -136,16 +144,17 @@ class PLAYER(threading.Thread):
                         self.shou_login()
                     elif temp.func == 1:
                         self.shou_logout()
+                        break
                 elif temp.type == 2:
                     self.shou_error()
             else:
-                print('Invalid head encounter.')
+                if self.debug: print('Invalid head encounter.')
             sleep(0.01)
             # input('.')
 
     # receive logic
     def shou_setup(self, head):
-        print('receive setup')
+        if self.debug: print('receive setup')
         content = read_file(self.sk)
         content = content.decode('utf-8')
         content = content.split(' ')
@@ -155,12 +164,13 @@ class PLAYER(threading.Thread):
         self.player_info = (int(content[0]), int(content[1]), int(content[2]))
 
     def shou_play(self):
-        print('receive play')
+        if self.debug: print('receive play')
         data_len = read_int(self.sk)
         pos = read_int(self.sk)
-        print(data_len, pos)
+        if self.debug: print(data_len, pos)
         content = read_len(self.sk, data_len)
         if pos == self.pos:
+            if self.stream is None: return
             self.lock.acquire()
             if self.stream.is_active():
                 self.stream.write(bytes(content))
@@ -168,21 +178,21 @@ class PLAYER(threading.Thread):
             self.pos += 1
 
     def shou_pause(self):
-        print('receive pause')
+        if self.debug: print('receive pause')
         pass
 
     def shou_teardown(self):
-        print('receive teardown')
+        if self.debug: print('receive teardown')
         pass
 
     def shou_login(self):
-        print('receive login')
+        if self.debug: print('receive login')
         content = read_file(self.sk)
         content = content.decode('utf-8')
         self.data_list = content.split(' ')
 
     def shou_logout(self):
-        print('receive logout')
+        if self.debug: print('receive logout')
         pass
 
     def shou_error(self):
@@ -226,24 +236,28 @@ if __name__ == '__main__':
             print('can not connect to server.')
         else:
             break
-    p = PLAYER(sk)
+    p = PLAYER(sk, False)
     p.start()
     print('ready to send')
-    p.login()
-    sleep(1)
-    p.setup()
-    sleep(1)
-    p.play()
-    sleep(5)
-    p.pause()
-    input('.')
-    p.play()
-    # while True:
-    #     order = input('>>>new order\n')
-    #     order = int(order)
-    #     if order == 0: p.setup()
-    #     if order == 1: p.play()
-    #     if order == 2: p.pause()
-    #     if order == 3: p.teardown()
-    #     if order == 10: p.login()
-    #     if order == 11: p.logout()
+    # p.login()
+    # sleep(1)
+    # p.setup()
+    # sleep(1)
+    # p.play()
+    # sleep(5)
+    # p.pause()
+    # input('.')
+    # p.play()
+    while True:
+        order = input('new order>>>\t')
+        if order == 'setup':
+            order = input('ID of song\t')
+            order = int(order)
+            p.setup(order)
+        elif order == 'play': p.play()
+        elif order == 'pause': p.pause()
+        elif order == 'teardown': p.teardown()
+        elif order == 'login': p.login()
+        elif order == 'logout':
+            p.logout()
+            break

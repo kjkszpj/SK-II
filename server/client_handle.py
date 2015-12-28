@@ -12,10 +12,12 @@ class CLIENT_HANDLE(threading.Thread):
     data = None
     content = None
     uid = None
+    retf = None
 
-    def __init__(self, dconn):
+    def __init__(self, dconn, retf):
         threading.Thread.__init__(self)
         self.sk = dconn
+        self.retf = retf
 
     def run(self):
         # todo, where to put init of content_control?
@@ -39,8 +41,9 @@ class CLIENT_HANDLE(threading.Thread):
             elif p.head.type == 1:
                 if p.head.func == 0:      func = self.login
                 if p.head.func == 1:      func = self.logout
-            if func(p) == True: break
+            if func(p): break
         print('bye~')
+        self.retf()
 
     def login(self, p):
         self.uid = p.head.uid
@@ -48,5 +51,7 @@ class CLIENT_HANDLE(threading.Thread):
         pass
 
     def logout(self, p):
+        p.head.flag = 1
+        self.sk.send(p.tobyte())
         self.uid = None
         return True

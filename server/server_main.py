@@ -3,6 +3,7 @@ import sys
 sys.path.append(os.path.abspath(sys.argv[0])[:-21])
 
 import socket
+import threading
 from share.config import CONFIG
 from server.client_handle import CLIENT_HANDLE
 
@@ -18,12 +19,28 @@ class SERVER_HANDLE:
         self.sk.listen(10)
 
 
+def cnt_jjian():
+    global cnt
+    lock.acquire()
+    cnt -= 1
+    print('Server load: %d' % cnt)
+    lock.release()
+
+
+def cnt_jjia():
+    global cnt
+    lock.acquire()
+    cnt += 1
+    print('Server load: %d' % cnt)
+    lock.release()
+
+
 if __name__ == '__main__':
     server_sk = SERVER_HANDLE()
     cnt = 0
+    lock = threading.Lock()
     while True:
         client_sk, _ = server_sk.sk.accept()
-        client_th = CLIENT_HANDLE(client_sk)
+        client_th = CLIENT_HANDLE(client_sk, cnt_jjian)
         client_th.start()
-        cnt += 1
-        print('Server load: %d' % cnt)
+        cnt_jjia()

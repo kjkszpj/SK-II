@@ -9,12 +9,32 @@ by 游沛杰 13307130325
 
 在本次项目中我们通过socket API编程完成应用层协议开发.
 
-因为不是很想做聊天室/编辑器, 所以我最后选择尝试使用socket实现一个音乐播放器. 由于时间原因没能把所有想做的功能实现, 以下我主要介绍设计和部分实现情况.
+因为不是很想做聊天室/编辑器, 所以我最后选择尝试使用socket实现一个 **音乐播放器**.
+
+音乐播放服务器, 可以干什么呢?
+
+-   节省本地磁盘容量(尤其对于手机等移动设备)
+-   方便在不同设备上听音乐
+-   可以通过播放时间等给用户计费
+-   服务器不需要一直发数据, 可以sleep一段短的时间再发
+-   ...
+
+由于时间原因没能把所有想做的功能实现, 以下我主要介绍设计和部分实现情况.
 
 ##  SOCKET介绍
 使用socket进行通信的原理详见助教实验课件.
 
 在这里我们通过TCP建立的连接进行通信, 在TCP基础上实现应用层协议
+
+#### configuration
+
+-   Python 3
+-   socket module
+-   PyAudio
+-   develop on Mac OS X
+-   base on TCP
+-   IDE: JetBrains PyCharm
+-   no UI
 
 ---
 
@@ -100,19 +120,16 @@ bit 3   头部是否需要扩展
 
 ##  实现过程 & 实现细节
 
+todo 多线程流程图
+
 这里我们主要是client-server模型, 由client来首先发出指令, 然后通过server提供数据.
 
-命令包括login, logout, setup, play, pause, teardown等.
-
-login/logout分别是登入登出,在登出的时候服务器就可以断开这个socket连接了.
-
-setup是播放音乐的准备阶段, 这时候服务器会返回一系列参数(如音频格式,采样频率等)帮助客户建立pyaudio对象来播放.
-
-play指定从某个音乐的某个时间节点开始播放, 时间节点作为数据字段传输.
-
-用户发送pause可以告诉服务器不需要再发数据了, 在暂停的时候减轻服务器负担.
-
-通过teardown终结一个音乐的播放.
+-   命令包括login, logout, setup, play, pause, teardown等.
+-   login/logout分别是登入登出,在登出的时候服务器就可以断开这个socket连接了.
+-   setup是播放音乐的准备阶段, 这时候服务器会返回一系列参数(如音频格式,采样频率等)帮助客户建立pyaudio对象来播放.
+-   play指定从某个音乐的某个时间节点开始播放, 时间节点作为数据字段传输.
+-   用户发送pause可以告诉服务器不需要再发数据了, 在暂停的时候减轻服务器负担.
+-   通过teardown终结一个音乐的播放.
 
 ### SOCKET编程
 Python3中的Socket模块提供了标准的BSD Socket API, 主要用到的函数如下:
@@ -120,7 +137,7 @@ Python3中的Socket模块提供了标准的BSD Socket API, 主要用到的函数
 -   sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP), 创建新的socket对象
 -   服务器用到的
     -   sk.bind((addr, port)), 绑定到指定端口
-    -   sk.listen(0x233), 监听端口
+    -   sk.listen(2333), 监听端口
     -   conn, addr = sk.accept(), 收到数据建立连接, 返回新的连接的sk对象
 -   客户端用到的
     -   sk.connect((addr, port))连接到服务器
@@ -158,7 +175,7 @@ to run the server, you should first config the server address and port in file s
 
 by default, we use:
 > server_address = '127.0.0.1'
-> port = 2333
+> port = 0x91D
 
 run in **root** directory of my project:
 > python3 server/server_main.py
@@ -181,8 +198,14 @@ todo: generate exe for Windows 正版软件受害者
 以下是多个用户登录时的情况
 ![fly_me_to_the_moon](./report/2.png)
 
-##  总结
-todo
+##  总结 & future
+通过这次的项目我掌握了基本的socket编程.
+
+其实我觉得使用TCP来传输音乐数据不太科学, 因为我现在的实现需要对每个用户维护一个长连接, 增加了服务器的开销.
+
+针对组播, 广播也难以优化. 针对组播, 设想可以考虑对每个资源维护一个线程, 同时对多个用户发送数据.
+
+本次项目从12月3号尝试python的socket开始, 历时20天, 虽然其中很多时间不是在做这个项目, 但是做出来的东西 *连UI都没有*, 需要考虑一下提升我的编程能力... 
 
 ---
 

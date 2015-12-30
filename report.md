@@ -65,20 +65,51 @@ by 游沛杰 13307130325
 用类型字段大概标识出这是一个与哪个模块相关的帧.
 各种取值含义如下:
 
-0   播放器相关数据
-1   控制相关数据
-2   错误信息
-3   录音相关
+<table>
+<tbody>
+<tr><td><em>type value </em></td><td><em>含义</em></td></tr>
+<tr><td>0</td><td>播放器相关数据</td></tr>
+<tr><td>1</td><td>控制相关数据</td></tr>
+<tr><td>2</td><td>错误信息</td></tr>
+<tr><td>3</td><td>录音相关</td></tr>
+</tbody>
+</table>
 
 #### 功能字段(func, 1Byte)
 
 在同一类型帧中区分出不同操作
+播放器(type=0)
+<table>
+<tbody>
+<tr><td><em>func value </em></td><td><em>含义</em></td></tr>
+<tr><td>0</td><td>setup</td></tr>
+<tr><td>1</td><td>play</td></tr>
+<tr><td>2</td><td>pause</td></tr>
+<tr><td>3</td><td>teardown</td></tr>
+</tbody>
+</table>
+
+控制(type=1)
+<table>
+<tbody>
+<tr><td><em>func value </em></td><td><em>含义</em></td></tr>
+<tr><td>0</td><td>login</td></tr>
+<tr><td>1</td><td>logout</td></tr>
+<tr><td>2</td><td>encrypt</td></tr>
+</tbody>
+</table>
 
 #### flag, 1Byte
-bit 0   是否为ACK帧
-bit 1   是否加密
-bit 2   数据是否有校验和
-bit 3   头部是否需要扩展
+
+<table>
+<tbody>
+<tr><td><em>flag bit </em></td><td><em>含义</em></td></tr>
+<tr><td>0</td><td>是否为ACK帧</td></tr>
+<tr><td>1</td><td>是否加密</td></tr>
+<tr><td>2</td><td>数据是否有校验和</td></tr>
+<tr><td>3</td><td>头部是否需要扩展</td></tr>
+</tbody>
+</table>
 
 #### 用户标识(uid, 2Byte)
 
@@ -120,8 +151,6 @@ bit 3   头部是否需要扩展
 
 ##  实现过程 & 实现细节
 
-todo 多线程流程图
-
 这里我们主要是client-server模型, 由client来首先发出指令, 然后通过server提供数据.
 
 -   命令包括login, logout, setup, play, pause, teardown等.
@@ -148,13 +177,27 @@ Python3中的Socket模块提供了标准的BSD Socket API, 主要用到的函数
 具体详见pyaudio文档
 
 ### 多线程
+对于用户,需要有两个线程, 只用一个线程会出现阻塞(通过命令控制播放器的时候不能接收数据, 接收数据的时候不能控制).
+
+1   一个负责接收socket数据(主要是持续不断的音频数据)
+2   客户端播放器的控制
+
+对应在服务器端, *对于每个用户连接* 也需要有两个线程
+
+1.  周期性地发送音频数据并写到stream中播放
+2.  接收来自用户的请求(如请求暂停发送等)
+
+另外我们需要有一个线程来监听是否有新的用户连接进来, 如果accept则需要给他新建2个线程(如上所述)
+
 通过前面的逻辑流程图我们发现这里需要用到大量的多线程♂知识.
 
 线程的创建通过threading.Thread()完成, 由t.start()方法来开始线程, t.terminate()来结束线程.
 
+服务器端的一个线程出错不会影响整体的运行(因为是多线程).
+
 ### 锁
 实现过程中发现, 如果停止pyaudio.stream以后再往里面写数据会造成原来停止的播放器继续播放.
-客户端中的播放线程和控制线程需要通过对共享数据---播放器状态加锁来进行同步, 锁使用threading.Lock对象
+客户端中的播放线程和控制线程需要通过对共享数据--- **播放器状态** *加锁*来进行同步, 锁使用threading.Lock对象
 
 ##  How to run
 necessary:
@@ -182,8 +225,6 @@ run in **root** directory of my project:
 
 to run the client program
 > python3 client/client_main.py
-
-todo: generate exe for Windows 正版软件受害者
 
 ##  效果展示
 
